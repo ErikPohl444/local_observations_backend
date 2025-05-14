@@ -2,7 +2,10 @@ import json
 
 import requests
 from datetime import datetime, timedelta
-from flask import Flask, Response
+from flask import Flask, Response, stream_with_context
+from flask_cors import CORS
+import time
+
 
 
 def contains_any_substring(text, substrings):
@@ -22,9 +25,25 @@ def contains_any_substring(text, substrings):
   return False
 
 app = Flask(__name__)
+CORS(app)
+
 
 @app.route('/stream')
 def obs_stream():
+    def generate_data(result_obs):
+        print("opening")
+        first = True
+        for i in result_obs:
+
+            print(f"yielding {i}")
+            yield 'data: '
+            yield json.dumps(i)
+            yield '\n\n'
+            time.sleep(1)
+
+        print("closing")
+
+
     # Coordinates for Arlington, MA
     latitude = 42.4154
     longitude = -71.1565
@@ -34,7 +53,7 @@ def obs_stream():
 
     # Date range: last 24 hours
     now = datetime.utcnow()
-    yesterday = now - timedelta(days=1)
+    yesterday = now - timedelta(days=3)
     d1 = yesterday.strftime('%Y-%m-%dT%H:%M:%S')
     d2 = now.strftime('%Y-%m-%dT%H:%M:%S')
 
@@ -54,10 +73,26 @@ def obs_stream():
     }
 
     # API call
-    response = requests.get(url, params=params)
-    place_terms = ['Arlington', 'Horn Pond', 'Concord']
-    data = response.json()
-    filtered_data = [x for x in data['results'] if x['species_guess'] and contains_any_substring(x['place_guess'], place_terms) ]
+    try:
+        response = requests.get(url, params=params)
+        place_terms = ['Arlington', 'Horn Pond', 'Concord']
+        data = response.json()
+        filtered_data = [x for x in data['results'] if x['species_guess'] and contains_any_substring(x['place_guess'], place_terms) ]
+        if not filtered_data:
+            raise FileNotFoundError
+    except:
+        print("mock data")
+        filtered_data = [
+            {'observed_on': '05-14-2025',
+             'species_guess': 'unicorn',
+             'place_guess': 'Horn Pond'},
+            {'observed_on': '05-14-2025',
+             'species_guess': 'dragon',
+             'place_guess': 'Arlington'},
+            {'observed_on': '05-14-2025',
+             'species_guess': 'wraith',
+             'place_guess': 'Concord'},
+        ]
     # Output results
     print(f"Found {len(filtered_data)} observations with a species guess in the last 24 hours:")
 
@@ -66,7 +101,8 @@ def obs_stream():
         print(f"{obs['observed_on']} - {obs['species_guess']} ({obs['place_guess']})")
         data = {"obs_date": obs['observed_on'], "obs_species_guess": obs['species_guess'], "obs_place_guess": obs['place_guess']}
         result_obs.append(data)
-    return Response(json.dumps(result_obs), mimetype='text/event-stream')
+    print("json", result_obs)
+    return Response(stream_with_context(generate_data(result_obs)), mimetype='text/event-stream')
 
 if __name__ == '__main__':
     app.run(debug=True)
