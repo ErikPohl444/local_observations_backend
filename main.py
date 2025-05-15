@@ -79,6 +79,7 @@ def obs_stream():
         response = requests.get(url, params=params)
         place_terms = ['Arlington', 'Horn Pond', 'Concord']
         data = response.json()
+        print(data)
         filtered_data = [x for x in data['results'] if x['species_guess'] and contains_any_substring(x['place_guess'], place_terms) ]
         if not filtered_data:
             raise FileNotFoundError
@@ -101,7 +102,12 @@ def obs_stream():
     result_obs = []
     for obs in filtered_data:
         print(f"{obs['observed_on']} - {obs['species_guess']} ({obs['place_guess']})")
-        data = {"obs_date": obs['observed_on'], "obs_species_guess": obs['species_guess'], "obs_place_guess": obs['place_guess']}
+        data = {
+            "obs_date": obs['observed_on'],
+            "obs_species_guess": obs['species_guess'],
+            "obs_place_guess": obs['place_guess'],
+            "obs_observed_on_string": obs['observed_on_string']
+        }
         result_obs.append(data)
     print("json", result_obs)
     return Response(stream_with_context(generate_data(result_obs)), mimetype='text/event-stream')
