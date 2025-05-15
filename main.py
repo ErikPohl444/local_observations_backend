@@ -41,6 +41,8 @@ def obs_stream():
             yield '\n\n'
             time.sleep(1)
 
+        yield 'data: end\n\n'
+
         print("closing")
 
 
