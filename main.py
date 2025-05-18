@@ -6,45 +6,28 @@ from flask import Flask, Response, stream_with_context
 from flask_cors import CORS
 import time
 
-
-
-def contains_any_substring(text, substrings):
-  """
-  Checks if a string contains any of the substrings in a list.
-
-  Args:
-    text: The string to search in.
-    substrings: A list of substrings to search for.
-
-  Returns:
-    True if the string contains at least one of the substrings, False otherwise.
-  """
-  for substring in substrings:
-    if substring in text:
-      return True
-  return False
+from requests import HTTPError, TooManyRedirects
 
 app = Flask(__name__)
 CORS(app)
 
 
+def contains_any_substring(text, substrings):
+    return any(text.index(substring) for substring in substrings)
+
+
 @app.route('/stream')
 def obs_stream():
-    def generate_data(result_obs):
+    def generate_data(observations):
         print("opening")
-        first = True
-        for i in result_obs:
-
-            print(f"yielding {i}")
+        for observation in observations:
+            print(f"yielding {observation}")
             yield 'data: '
-            yield json.dumps(i)
+            yield json.dumps(observation)
             yield '\n\n'
             time.sleep(1)
-
         yield 'data: end\n\n'
-
         print("closing")
-
 
     # Coordinates for Arlington, MA
     latitude = 42.4154
@@ -74,43 +57,45 @@ def obs_stream():
         'per_page': 100
     }
 
-    # API call
+    filtered_data = []
     try:
         response = requests.get(url, params=params)
-        place_terms = ['Arlington', 'Horn Pond', 'Concord']
         data = response.json()
-        print(data)
-        filtered_data = [x for x in data['results'] if x['species_guess'] and contains_any_substring(x['place_guess'], place_terms) ]
-        if not filtered_data:
-            raise FileNotFoundError
-    except:
-        print("mock data")
+    except ConnectionError:
+        pass
+    except HTTPError:
+        pass
+    except TimeoutError:
+        pass
+    except TooManyRedirects:
+        pass
+    try:
+        place_terms = ['Arlington', 'Horn Pond', 'Concord']
         filtered_data = [
-            {'observed_on': '05-14-2025',
-             'species_guess': 'unicorn',
-             'place_guess': 'Horn Pond'},
-            {'observed_on': '05-14-2025',
-             'species_guess': 'dragon',
-             'place_guess': 'Arlington'},
-            {'observed_on': '05-14-2025',
-             'species_guess': 'wraith',
-             'place_guess': 'Concord'},
+            result for result in data['results']
+            if result['species_guess'] and contains_any_substring(result['place_guess'], place_terms)
         ]
+    except:
+        pass
+
     # Output results
     print(f"Found {len(filtered_data)} observations with a species guess in the last 24 hours:")
 
     result_obs = []
     for obs in filtered_data:
         print(f"{obs['observed_on']} - {obs['species_guess']} ({obs['place_guess']})")
-        data = {
-            "obs_date": obs['observed_on'],
-            "obs_species_guess": obs['species_guess'],
-            "obs_place_guess": obs['place_guess'],
-            "obs_observed_on_string": obs['observed_on_string']
-        }
+        try:
+            data = {
+                "obs_date": obs['observed_on'],
+                "obs_species_guess": obs['species_guess'],
+                "obs_place_guess": obs['place_guess'],
+                "obs_observed_on_string": obs['observed_on_string']
+            }
+        except:
+            print("encountered an exception")
         result_obs.append(data)
-    print("json", result_obs)
     return Response(stream_with_context(generate_data(result_obs)), mimetype='text/event-stream')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
