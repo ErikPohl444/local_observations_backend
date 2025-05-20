@@ -17,7 +17,7 @@ def contains_any_substring(text, substrings):
 
 
 @app.route('/stream')
-def obs_stream():
+def obs_stream() -> Response:
     def generate_data(observations):
         print("opening")
         for observation in observations:
@@ -30,23 +30,23 @@ def obs_stream():
         print("closing")
 
     # Coordinates for Arlington, MA
-    latitude = 42.4154
-    longitude = -71.1565
+    latitude: float = 42.4154
+    longitude: float = -71.1565
 
     # Radius in kilometers (20 miles ≈ 32.19 km)
-    radius_km = 32.19
+    radius_km: float = 32.19
 
     # Date range: last 24 hours
-    now = datetime.utcnow()
-    yesterday = now - timedelta(days=3)
-    d1 = yesterday.strftime('%Y-%m-%dT%H:%M:%S')
-    d2 = now.strftime('%Y-%m-%dT%H:%M:%S')
+    now: datetime = datetime.utcnow()
+    yesterday: datetime = now - timedelta(days=3)
+    d1: str = yesterday.strftime('%Y-%m-%dT%H:%M:%S')
+    d2: str = now.strftime('%Y-%m-%dT%H:%M:%S')
 
     # iNaturalist API endpoint
-    url = 'https://api.inaturalist.org/v1/observations'
+    url: str = 'https://api.inaturalist.org/v1/observations'
 
     # Request parameters
-    params = {
+    params: dict = {
         'lat': latitude,
         'lng': longitude,
         'radius': radius_km,
@@ -57,10 +57,10 @@ def obs_stream():
         'per_page': 100
     }
 
-    filtered_data = []
+    filtered_data: list = []
     try:
-        response = requests.get(url, params=params)
-        data = response.json()
+        response: Response = requests.get(url, params=params)
+        data: json = response.json()
     except ConnectionError:
         pass
     except HTTPError:
@@ -70,8 +70,8 @@ def obs_stream():
     except TooManyRedirects:
         pass
     try:
-        place_terms = ['Arlington', 'Horn Pond', 'Concord']
-        filtered_data = [
+        place_terms: list[str] = ['Arlington', 'Horn Pond', 'Concord']
+        filtered_data: list[dict] = [
             result for result in data['results']
             if result['species_guess'] and contains_any_substring(result['place_guess'], place_terms)
         ]
@@ -81,11 +81,11 @@ def obs_stream():
     # Output results
     print(f"Found {len(filtered_data)} observations with a species guess in the last 24 hours:")
 
-    result_obs = []
+    result_obs: list = []
     for obs in filtered_data:
         print(f"{obs['observed_on']} - {obs['species_guess']} ({obs['place_guess']})")
         try:
-            data = {
+            data: dict = {
                 "obs_date": obs['observed_on'],
                 "obs_species_guess": obs['species_guess'],
                 "obs_place_guess": obs['place_guess'],
