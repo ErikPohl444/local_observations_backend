@@ -1,6 +1,7 @@
 # Local Observations Backend
 
-** Note: this is not a fully-populated repo-- it is specific for one purpose: to provide streaming data for use with a React front-end in a related repo ** 
+** Note: this is not a fully-populated repo-- it is specific for one purpose: to provide streaming data for use with a React front-end in a related repo **
+See related repo here: <a href="https://github.com/ErikPohl444/local_observations_frontend">Local observations frontend</a>
 A Python Flask application serving as a toy-controlled streaming data server for use with the **local_observations_frontend** repository.
 This backend streaming server serves up streaming data concocted from iNaturalist observation data from the past 24 hours for an area within a 25-mile radius of Arlingon, MA.
 
