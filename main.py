@@ -62,14 +62,17 @@ def obs_stream() -> Response:
         response: Response = requests.get(url, params=params)
         data: json = response.json()
     except ConnectionError:
-        pass
+        print("connection error")
     except HTTPError:
-        pass
+        print("http error")
     except TimeoutError:
-        pass
+        print("timeout error")
     except TooManyRedirects:
-        pass
+        print("too many redirects")
     try:
+        print(f"obtained data for these places")
+        for result in data['results']:
+            print(result['place_guess'])
         place_terms: list[str] = ['Arlington', 'Horn Pond', 'Concord']
         filtered_data: list[dict] = [
             result for result in data['results']
@@ -79,7 +82,7 @@ def obs_stream() -> Response:
         pass
 
     # Output results
-    print(f"Found {len(filtered_data)} observations with a species guess in the last 24 hours:")
+    print(f"Found {len(filtered_data)} observations in filtered places with a species guess in the last 24 hours:")
 
     result_obs: list = []
     for obs in filtered_data:
