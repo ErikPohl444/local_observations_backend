@@ -12,13 +12,13 @@ app = Flask(__name__)
 CORS(app)
 
 
-def contains_any_substring(text, substrings):
+def contains_any_substring(text: str, substrings: list[str]):
     return any(text.index(substring) for substring in substrings)
 
 
 @app.route('/stream')
 def obs_stream() -> Response:
-    def generate_data(observations):
+    def generate_data(observations: json):
         print("opening")
         for observation in observations:
             print(f"yielding {observation}")
@@ -30,23 +30,23 @@ def obs_stream() -> Response:
         print("closing")
 
     # Coordinates for Arlington, MA
-    latitude: float = 42.4154
-    longitude: float = -71.1565
+    latitude = 42.4154
+    longitude = -71.1565
 
     # Radius in kilometers (20 miles ≈ 32.19 km)
-    radius_km: float = 32.19
+    radius_km = 32.19
 
     # Date range: last 24 hours
-    now: datetime = datetime.utcnow()
-    yesterday: datetime = now - timedelta(days=3)
-    d1: str = yesterday.strftime('%Y-%m-%dT%H:%M:%S')
-    d2: str = now.strftime('%Y-%m-%dT%H:%M:%S')
+    now = datetime.utcnow()
+    yesterday = now - timedelta(days=3)
+    d1 = yesterday.strftime('%Y-%m-%dT%H:%M:%S')
+    d2 = now.strftime('%Y-%m-%dT%H:%M:%S')
 
     # iNaturalist API endpoint
-    url: str = 'https://api.inaturalist.org/v1/observations'
+    url = 'https://api.inaturalist.org/v1/observations'
 
     # Request parameters
-    params: dict = {
+    params = {
         'lat': latitude,
         'lng': longitude,
         'radius': radius_km,
@@ -57,7 +57,7 @@ def obs_stream() -> Response:
         'per_page': 100
     }
 
-    filtered_data: list = []
+    filtered_data = []
     try:
         response: Response = requests.get(url, params=params)
         data: json = response.json()
@@ -84,11 +84,11 @@ def obs_stream() -> Response:
     # Output results
     print(f"Found {len(filtered_data)} observations in filtered places with a species guess in the last 24 hours:")
 
-    result_obs: list = []
+    result_obs = []
     for obs in filtered_data:
         print(f"{obs['observed_on']} - {obs['species_guess']} ({obs['place_guess']})")
         try:
-            data: dict = {
+            data = {
                 "obs_date": obs['observed_on'],
                 "obs_species_guess": obs['species_guess'],
                 "obs_place_guess": obs['place_guess'],
