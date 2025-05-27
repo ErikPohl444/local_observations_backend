@@ -73,7 +73,7 @@ def obs_stream() -> Response:
         print(f"obtained data for these places")
         for result in data['results']:
             print(result['place_guess'])
-        place_terms: list[str] = ['Arlington', 'Horn Pond', 'Concord']
+        place_terms = ['Arlington', 'Horn Pond', 'Concord']
         filtered_data: list[dict] = [
             result for result in data['results']
             if result['species_guess'] and contains_any_substring(result['place_guess'], place_terms)
