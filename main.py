@@ -1,13 +1,11 @@
 import json
 import logging
-
 import requests
 from datetime import datetime, timedelta
 from flask import Flask, Response, stream_with_context
 from flask_cors import CORS
 import time
 from collections import Counter
-
 from requests import HTTPError, TooManyRedirects
 
 app = Flask(__name__)
@@ -69,17 +67,17 @@ def obs_stream() -> Response:
     try:
         response: Response = requests.get(url, params=params)
         data: json = response.json()
-    except ConnectionError:
-        print("connection error")
+    except ConnectionError as e:
+        print(f"encountered connection error {e}")
         exit(1)
-    except HTTPError:
-        print("http error")
+    except HTTPError as e:
+        print(f"encountered http error {e}")
         exit(1)
-    except TimeoutError:
-        print("timeout error")
+    except TimeoutError as e:
+        print(f"timeout error {e}")
         exit(1)
-    except TooManyRedirects:
-        print("too many redirects")
+    except TooManyRedirects as e:
+        print(f"too many redirects {e}")
         exit(1)
     try:
         print(f"obtained data for these places")
@@ -96,8 +94,8 @@ def obs_stream() -> Response:
             result for result in data['results']
             if result['species_guess'] and contains_any_substring(result['place_guess'], place_terms)
         ]
-    except TypeError:
-        logging.error("issue outputting or filtering results ")
+    except TypeError as e:
+        logging.error(f"issue outputting or filtering results {e}")
 
     # Output results
     print(f"Found {len(filtered_data)} observations in filtered places with a species guess in the last 24 hours:")
@@ -113,7 +111,7 @@ def obs_stream() -> Response:
                 "obs_observed_on_string": obs['observed_on_string']
             }
         except TypeError:
-            print("encountered an exception")
+            print(f"encountered an exception {e}")
         result_obs.append(data)
     return Response(stream_with_context(generate_data(result_obs)), mimetype='text/event-stream')
 
