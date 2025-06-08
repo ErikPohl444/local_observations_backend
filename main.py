@@ -49,42 +49,10 @@ def generate_data(observations: json):
     print("closing")
 
 
-@app.route('/stream')
-def obs_stream() -> Response:
-
-    print(app.config)
-    # Coordinates for Arlington, MA
-    latitude = app.config["latitude"]
-    longitude = app.config["longitude"]
-
-    # Radius in kilometers (20 miles ≈ 32.19 km)
-    radius_km = app.config["radius_in_kms"]
-
-    # Date range: last 24 hours
-    now = datetime.utcnow()
-    yesterday = now - timedelta(days=app.config["delta_in_days"])
-    d1 = yesterday.strftime('%Y-%m-%dT%H:%M:%S')
-    d2 = now.strftime('%Y-%m-%dT%H:%M:%S')
-
-    # iNaturalist API endpoint
-    url = app.config["endpoint_url"]
-
-    # Request parameters
-    params = {
-        'lat': latitude,
-        'lng': longitude,
-        'radius': radius_km,
-        'd1': d1,
-        'd2': d2,
-        'order_by': 'created_at',
-        'order': 'desc',
-        'per_page': 100
-    }
-
-    filtered_data = []
+def get_response(url: str, params: dict) -> json:
     try:
         response: Response = requests.get(url, params=params)
-        data: json = response.json()
+        return response.json()
     except ConnectionError as e:
         print(f"encountered connection error {e}")
         exit(1)
@@ -97,27 +65,20 @@ def obs_stream() -> Response:
     except TooManyRedirects as e:
         print(f"too many redirects {e}")
         exit(1)
-    try:
-        print(f"obtained data for these places")
-        [
-            print(f"{place_name}: {count}")
-            for (place_name, count)
-            in Counter([item['place_guess']
-                        for item in data['results']]
-                       ).items()
-        ]
-        # filter the data by places and having a species guess
-        place_terms = ['Arlington', 'Horn Pond', 'Concord']
-        filtered_data: list[dict] = [
-            result for result in data['results']
-            if result['species_guess'] and contains_any_substring(result['place_guess'], place_terms)
-        ]
-    except TypeError as e:
-        logging.error(f"issue outputting or filtering results {e}")
 
-    # Output results
-    print(f"Found {len(filtered_data)} observations in filtered places with a species guess in the last 24 hours:")
 
+def summarize_places(data: list[json]):
+    print(f"obtained data for these places")
+    [
+        print(f"{place_name}: {count}")
+        for (place_name, count)
+        in Counter([item['place_guess']
+                    for item in data['results']]
+                   ).items()
+    ]
+
+
+def build_formatted_observations(filtered_data: list[json]) -> list[dict]:
     result_obs = []
     for obs in filtered_data:
         print(f"{obs['observed_on']} - {obs['species_guess']} ({obs['place_guess']})")
@@ -131,6 +92,49 @@ def obs_stream() -> Response:
         except TypeError as e:
             print(f"encountered an exception {e}")
         result_obs.append(data)
+    return result_obs
+
+
+@app.route('/stream')
+def obs_stream() -> Response:
+    # Coordinates for Arlington, MA
+    latitude = app.config["latitude"]
+    longitude = app.config["longitude"]
+    # Radius in kilometers (20 miles ≈ 32.19 km)
+    radius_km = app.config["radius_in_kms"]
+    # Date range: last 24 hours
+    now = datetime.utcnow()
+    yesterday = now - timedelta(days=app.config["delta_in_days"])
+    d1 = yesterday.strftime('%Y-%m-%dT%H:%M:%S')
+    d2 = now.strftime('%Y-%m-%dT%H:%M:%S')
+    # iNaturalist API endpoint
+    url = app.config["endpoint_url"]
+    # Request parameters
+    params = {
+        'lat': latitude,
+        'lng': longitude,
+        'radius': radius_km,
+        'd1': d1,
+        'd2': d2,
+        'order_by': 'created_at',
+        'order': 'desc',
+        'per_page': 100
+    }
+    filtered_data = []
+    data = get_response(url, params)
+    try:
+        summarize_places(data)
+        # filter the data by places and having a species guess
+        place_terms = ['Arlington', 'Horn Pond', 'Concord']
+        filtered_data: list[dict] = [
+            result for result in data['results']
+            if result['species_guess'] and contains_any_substring(result['place_guess'], place_terms)
+        ]
+    except TypeError as e:
+        logging.error(f"issue outputting or filtering results {e}")
+    # Output results
+    print(f"Found {len(filtered_data)} observations in filtered places with a species guess in the last 24 hours:")
+    result_obs = build_formatted_observations(filtered_data)
     return Response(stream_with_context(generate_data(result_obs)), mimetype='text/event-stream')
 
 
