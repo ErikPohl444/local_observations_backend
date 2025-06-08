@@ -14,8 +14,14 @@ app = Flask(__name__)
 CORS(app)
 
 
-def contains_any_substring(text: str, substrings: list[str]):
-    return any(text.index(substring) for substring in substrings)
+def contains_any_substring(text: str, substrings: list[str]) -> bool:
+    print([substring for substring in substrings])
+    print(text)
+    return any(
+        text.find(substring) > -1
+        for substring
+        in substrings
+    )
 
 
 @app.route('/stream')
