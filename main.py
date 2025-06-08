@@ -12,6 +12,21 @@ app = Flask(__name__)
 CORS(app)
 
 
+def get_configs(config_file_path: str) -> dict:
+    try:
+        with open(config_file_path, 'r') as f:
+            custom_config = json.load(f)
+        return custom_config
+    except FileNotFoundError:
+        print(f"Error: Custom config file not found at {config_file_path}")
+    except json.JSONDecodeError:
+        print(f"Error: Invalid JSON format in {config_file_path}")
+
+
+file_path = './config.json'
+app.config.update(get_configs(file_path))
+
+
 def contains_any_substring(text: str, substrings: list[str]) -> bool:
     print([substring for substring in substrings])
     print(text)
@@ -22,34 +37,37 @@ def contains_any_substring(text: str, substrings: list[str]) -> bool:
     )
 
 
+def generate_data(observations: json):
+    print("opening")
+    for observation in observations:
+        print(f"yielding {observation}")
+        yield 'data: '
+        yield json.dumps(observation)
+        yield '\n\n'
+        time.sleep(1)
+    yield 'data: end\n\n'
+    print("closing")
+
+
 @app.route('/stream')
 def obs_stream() -> Response:
-    def generate_data(observations: json):
-        print("opening")
-        for observation in observations:
-            print(f"yielding {observation}")
-            yield 'data: '
-            yield json.dumps(observation)
-            yield '\n\n'
-            time.sleep(1)
-        yield 'data: end\n\n'
-        print("closing")
 
+    print(app.config)
     # Coordinates for Arlington, MA
-    latitude = 42.4154
-    longitude = -71.1565
+    latitude = app.config["latitude"]
+    longitude = app.config["longitude"]
 
     # Radius in kilometers (20 miles ≈ 32.19 km)
-    radius_km = 32.19
+    radius_km = app.config["radius_in_kms"]
 
     # Date range: last 24 hours
     now = datetime.utcnow()
-    yesterday = now - timedelta(days=3)
+    yesterday = now - timedelta(days=app.config["delta_in_days"])
     d1 = yesterday.strftime('%Y-%m-%dT%H:%M:%S')
     d2 = now.strftime('%Y-%m-%dT%H:%M:%S')
 
     # iNaturalist API endpoint
-    url = 'https://api.inaturalist.org/v1/observations'
+    url = app.config["endpoint_url"]
 
     # Request parameters
     params = {
@@ -110,7 +128,7 @@ def obs_stream() -> Response:
                 "obs_place_guess": obs['place_guess'],
                 "obs_observed_on_string": obs['observed_on_string']
             }
-        except TypeError:
+        except TypeError as e:
             print(f"encountered an exception {e}")
         result_obs.append(data)
     return Response(stream_with_context(generate_data(result_obs)), mimetype='text/event-stream')

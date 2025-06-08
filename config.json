@@ -1,0 +1,8 @@
+{
+  "latitude": 42.4154,
+  "longitude":-71.1565,
+  "radius_in_kms": 32.19,
+  "center_place_name": "Arlington",
+  "delta_in_days": 3,
+  "endpoint_url": "https://api.inaturalist.org/v1/observations"
+}
