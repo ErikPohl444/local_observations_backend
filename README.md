@@ -21,11 +21,6 @@ However, key elements of the search can be changed by altering the contents of t
 - Python 3.8 or higher
 - Flask library
 
-## Installing
-Thank you for clarifying. The entry point for your application is src/main.py, not app.py. The README's installation instructions should be updated accordingly.
-
-Here’s the revised "Installing" section for your README.md:
-
 ---
 
 ## Installing
