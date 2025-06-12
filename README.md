@@ -2,8 +2,7 @@
 
 # Local Observations Backend
 
-**Note: this is not a fully-populated repo-- it is specific for one purpose: to provide streaming data for use with a React front-end in a related repo**
-
+**Note: I haven't really shown this repo a lot of love.  Its purpose is simply to provide a backend api for the React front end**
 See related repo here: [local_observations_frontend](https://github.com/ErikPohl444/local_observations_frontend)
 
 A Python Flask application serving as a toy-controlled streaming-data server for use with the **local_observations_frontend** repository.
