@@ -96,22 +96,20 @@ def build_formatted_observations(filtered_data: list[json]) -> list[dict]:
     return result_obs
 
 
-@app.route('/stream')
-def obs_stream() -> Response:
-    # Coordinates for Arlington, MA
+def build_params() -> dict:
+    # Coordinates to search around
     latitude = app.config["latitude"]
     longitude = app.config["longitude"]
-    # Radius in kilometers (20 miles ≈ 32.19 km)
+    # Radius in kilometers
     radius_km = app.config["radius_in_kms"]
-    # Date range: last 24 hours
+    # Date range
     now = datetime.utcnow()
     yesterday = now - timedelta(days=app.config["delta_in_days"])
     d1 = yesterday.strftime('%Y-%m-%dT%H:%M:%S')
     d2 = now.strftime('%Y-%m-%dT%H:%M:%S')
     # iNaturalist API endpoint
-    url = app.config["endpoint_url"]
     # Request parameters
-    params = {
+    return {
         'lat': latitude,
         'lng': longitude,
         'radius': radius_km,
@@ -121,12 +119,17 @@ def obs_stream() -> Response:
         'order': 'desc',
         'per_page': 100
     }
+
+@app.route('/stream')
+def obs_stream() -> Response:
+    params = build_params()
+    url = app.config["endpoint_url"]
     filtered_data = []
     data = get_response(url, params)
     try:
         summarize_places(data)
         # filter the data by places and having a species guess
-        place_terms = ['Arlington', 'Horn Pond', 'Concord']
+        place_terms = app.config["location_filter_by"]
         filtered_data: list[dict] = [
             result for result in data['results']
             if result['species_guess'] and contains_any_substring(result['place_guess'], place_terms)

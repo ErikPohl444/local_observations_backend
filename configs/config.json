@@ -4,5 +4,6 @@
   "radius_in_kms": 32.19,
   "center_place_name": "Arlington",
   "delta_in_days": 3,
-  "endpoint_url": "https://api.inaturalist.org/v1/observations"
+  "endpoint_url": "https://api.inaturalist.org/v1/observations",
+  "location_filter_by": ["Arlington", "Horn Pond", "Concord"]
 }
