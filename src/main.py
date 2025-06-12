@@ -120,6 +120,7 @@ def build_params() -> dict:
         'per_page': 100
     }
 
+
 @app.route('/stream')
 def obs_stream() -> Response:
     params = build_params()
