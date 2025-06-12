@@ -22,22 +22,37 @@ However, key elements of the search can be changed by altering the contents of t
 - Flask library
 
 ## Installing
+Thank you for clarifying. The entry point for your application is src/main.py, not app.py. The README's installation instructions should be updated accordingly.
 
-1. Clone the repository:
+Here’s the revised "Installing" section for your README.md:
+
+---
+
+## Installing
+
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/ErikPohl444/local_observations_backend.git
    cd local_observations_backend
    ```
 
-2. Install dependencies:
+2. **(Recommended) Create a virtual environment:**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   ```
+
+3. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. Run the application:
+4. **Run the application:**
    ```bash
-   python app.py
+   python src/main.py
    ```
+
+---
 
 ## Running the Tests
 
