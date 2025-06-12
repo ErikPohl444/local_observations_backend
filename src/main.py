@@ -16,6 +16,7 @@ def get_configs(config_file_path: str) -> dict:
     try:
         with open(config_file_path, 'r') as f:
             custom_config = json.load(f)
+        logging.info(custom_config)
         return custom_config
     except FileNotFoundError:
         print(f"Error: Custom config file not found at {config_file_path}")
@@ -23,7 +24,7 @@ def get_configs(config_file_path: str) -> dict:
         print(f"Error: Invalid JSON format in {config_file_path}")
 
 
-file_path = './config.json'
+file_path = './configs/config.json'
 app.config.update(get_configs(file_path))
 
 
