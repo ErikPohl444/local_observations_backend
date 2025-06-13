@@ -2,11 +2,14 @@ import json
 import logging
 import requests
 from datetime import datetime, timedelta
-from flask import Flask, Response, stream_with_context
+from flask import Flask, Response, stream_with_context, Blueprint
 from flask_cors import CORS
 import time
 from collections import Counter
 from requests import HTTPError, TooManyRedirects
+
+v1 = Blueprint('v1', __name__, url_prefix='/v1')
+
 
 app = Flask(__name__)
 CORS(app)
@@ -121,7 +124,7 @@ def build_params() -> dict:
     }
 
 
-@app.route('/stream')
+@v1.route('/stream')
 def obs_stream() -> Response:
     params = build_params()
     url = app.config["endpoint_url"]
@@ -141,6 +144,8 @@ def obs_stream() -> Response:
     print(f"Found {len(filtered_data)} observations in filtered places with a species guess in the last 24 hours:")
     result_obs = build_formatted_observations(filtered_data)
     return Response(stream_with_context(generate_data(result_obs)), mimetype='text/event-stream')
+
+app.register_blueprint(v1)
 
 
 if __name__ == '__main__':
