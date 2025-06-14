@@ -145,6 +145,10 @@ def obs_stream() -> Response:
     result_obs = build_formatted_observations(filtered_data)
     return Response(stream_with_context(generate_data(result_obs)), mimetype='text/event-stream')
 
+@v1.route('/health', methods=['GET'])
+def health_check():
+    return {'status': 'ok'}, 200
+
 app.register_blueprint(v1)
 
 
